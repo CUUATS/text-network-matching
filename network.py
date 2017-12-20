@@ -3,6 +3,7 @@ from cuuats.datamodel import feature_class_factory as factory
 from cuuats.datamodel import D
 import os
 from collections import defaultdict
+import pandas as pd
 
 class Network(object):
 
@@ -24,18 +25,23 @@ class Network(object):
         self._segment = self._approach.related_classes[SEGMENT_NAME]
         # self._intersection = self._approach.related_classes[INTERSECTION_NAME]
 
-
-
-        for segment in self._segment.objects.filter(OBJECTID=15178):
-            print(segment.Name)
+        seg_dict = {}
+        d_dict = defaultdict(list)
+        for segment in self._segment.objects.filter(Name='W Nevada St'):
+            seg_name = self._remove_direction(segment.Name).upper()
+            sid = int(segment.SegmentID)
             segment_list = []
             for approach in getattr(segment, streetintersectionapproach):
-                direction = self._chg_dir(approach.LegDir)
+                d = self._chg_dir(approach.LegDir)
+                dir_dict = {}
                 for r_approach in getattr(approach.IntersectionID, streetintersectionapproach):
-                    segment_list.append(
-                    [self._remove_direction(r_approach.SegmentID.Name), direction])
-
-        print(segment_list)
+                    r_seg_name = self._remove_direction(r_approach.SegmentID.Name.upper())
+                    if r_seg_name != seg_name:
+                        dir_dict[r_seg_name] = d
+                        dir_dict['id'] = sid
+                d_dict[seg_name].append(dir_dict)
+        # seg_dict[seg_name] = dir_dict
+        import pdb; pdb.set_trace()
 
     def _chg_dir(self, direction):
         if direction == "E":
@@ -49,11 +55,12 @@ class Network(object):
 
     def _remove_direction(self, str):
         if str is not None:
-            replacement_list = ["W ", "S ", "E ", "W "]
+            replacement_list = ["W ", "S ", "E ", "N "]
             for r in replacement_list:
                 if str[0:2] == r:
                     str = str[2: len(str)]
             return str
+
 
 
         # self._index = \
